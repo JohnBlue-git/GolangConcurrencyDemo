@@ -1,0 +1,59 @@
+# ===== Go build outputs =====
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binaries
+*.test
+
+# Build output directories
+bin/
+build/
+dist/
+
+# Go workspace file (Go 1.18+)
+go.work
+go.work.sum
+
+# ===== Go tooling =====
+# Coverage files
+*.out
+coverage/
+coverage.txt
+
+# Profiling files
+*.prof
+
+# ===== Dependency directories =====
+# (usually not used with Go modules, but safe)
+vendor/
+
+# ===== IDEs & Editors =====
+# VS Code
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# IntelliJ / GoLand
+.idea/
+*.iml
+
+# Vim
+*.swp
+*.swo
+
+# ===== OS files =====
+.DS_Store
+Thumbs.db
+
+# ===== Logs =====
+*.log
+
+# ===== Environment files =====
+.env
+.env.*

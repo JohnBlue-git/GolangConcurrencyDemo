@@ -1,0 +1,264 @@
+╔════════════════════════════════════════════════════════════════════╗
+║                  GOROUTINES QUICK REFERENCE CARD                   ║
+╚════════════════════════════════════════════════════════════════════╝
+
+┌─────────────────────────────────────────────────────────────────────┐
+│ STARTING GOROUTINES                                                 │
+└─────────────────────────────────────────────────────────────────────┘
+
+  go myFunction()              // Launch function as goroutine
+  go func() { ... }()          // Anonymous function goroutine
+  go myFunction(arg1, arg2)    // Goroutine with arguments
+
+┌─────────────────────────────────────────────────────────────────────┐
+│ CHANNELS                                                            │
+└─────────────────────────────────────────────────────────────────────┘
+
+  ch := make(chan int)         // Unbuffered channel
+  ch := make(chan int, 10)     // Buffered channel (capacity 10)
+  
+  ch <- value                  // Send to channel (blocks if full)
+  value := <-ch                // Receive from channel (blocks if empty)
+  
+  close(ch)                    // Close channel (sender only!)
+  value, ok := <-ch            // Check if channel is closed
+  
+  for value := range ch { }    // Loop until channel closed
+
+┌─────────────────────────────────────────────────────────────────────┐
+│ CHANNEL DIRECTION (Type Safety)                                    │
+└─────────────────────────────────────────────────────────────────────┘
+
+  func send(ch chan<- int)     // Send-only channel
+  func recv(ch <-chan int)     // Receive-only channel
+
+┌─────────────────────────────────────────────────────────────────────┐
+│ WAITGROUP - Synchronization                                        │
+└─────────────────────────────────────────────────────────────────────┘
+
+  var wg sync.WaitGroup
+  
+  wg.Add(1)                    // Increment counter (before goroutine)
+  wg.Done()                    // Decrement counter (in goroutine)
+  wg.Wait()                    // Block until counter = 0
+  
+  Example:
+    wg.Add(1)
+    go func() {
+        defer wg.Done()
+        // Do work...
+    }()
+    wg.Wait()
+
+┌─────────────────────────────────────────────────────────────────────┐
+│ MUTEX - Protect Shared Data                                        │
+└─────────────────────────────────────────────────────────────────────┘
+
+  var mu sync.Mutex
+  
+  mu.Lock()                    // Acquire lock
+  // Critical section
+  mu.Unlock()                  // Release lock
+  
+  Best practice:
+    mu.Lock()
+    defer mu.Unlock()
+    // Critical section
+
+┌─────────────────────────────────────────────────────────────────────┐
+│ SELECT - Multiplexing Channels                                     │
+└─────────────────────────────────────────────────────────────────────┘
+
+  select {
+  case msg := <-ch1:
+      // Handle message from ch1
+  case ch2 <- value:
+      // Send to ch2
+  case <-time.After(1*time.Second):
+      // Timeout
+  default:
+      // Non-blocking (executes if no channel ready)
+  }
+
+┌─────────────────────────────────────────────────────────────────────┐
+│ CONTEXT - Cancellation & Timeout                                   │
+└─────────────────────────────────────────────────────────────────────┘
+
+  // Create context with cancel
+  ctx, cancel := context.WithCancel(context.Background())
+  defer cancel()
+  
+  // Create context with timeout
+  ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+  
+  // Create context with deadline
+  ctx, cancel := context.WithDeadline(ctx, time.Now().Add(5*time.Second))
+  
+  // Check for cancellation in goroutine
+  select {
+  case <-ctx.Done():
+      return ctx.Err()  // Context was cancelled/timed out
+  default:
+      // Continue working
+  }
+
+┌─────────────────────────────────────────────────────────────────────┐
+│ COMMON PATTERNS                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+
+┌─ Worker Pool ─────────────────────────────────────────────────────┐
+│                                                                    │
+│  jobs := make(chan Job, 100)                                      │
+│  results := make(chan Result, 100)                                │
+│                                                                    │
+│  for w := 1; w <= numWorkers; w++ {                               │
+│      go worker(jobs, results)                                     │
+│  }                                                                 │
+│                                                                    │
+│  for j := range jobList {                                         │
+│      jobs <- j                                                    │
+│  }                                                                 │
+│  close(jobs)                                                      │
+└───────────────────────────────────────────────────────────────────┘
+
+┌─ Pipeline ────────────────────────────────────────────────────────┐
+│                                                                    │
+│  stage1 := make(chan int)                                         │
+│  stage2 := make(chan int)                                         │
+│                                                                    │
+│  go generator(stage1)        // Sends data                        │
+│  go processor(stage1, stage2) // Processes and forwards          │
+│  consumer(stage2)             // Final consumer                   │
+└───────────────────────────────────────────────────────────────────┘
+
+┌─ Rate Limiting ───────────────────────────────────────────────────┐
+│                                                                    │
+│  ticker := time.NewTicker(200 * time.Millisecond)                │
+│  defer ticker.Stop()                                              │
+│                                                                    │
+│  for req := range requests {                                      │
+│      <-ticker.C  // Wait for tick                                 │
+│      process(req)                                                 │
+│  }                                                                 │
+└───────────────────────────────────────────────────────────────────┘
+
+┌─ Semaphore (Limit Concurrency) ───────────────────────────────────┐
+│                                                                    │
+│  sem := make(chan struct{}, maxConcurrent)                        │
+│                                                                    │
+│  for task := range tasks {                                        │
+│      sem <- struct{}{}  // Acquire                                │
+│      go func() {                                                  │
+│          defer func() { <-sem }()  // Release                     │
+│          process(task)                                            │
+│      }()                                                          │
+│  }                                                                 │
+└───────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────┐
+│ COMMON MISTAKES & FIXES                                            │
+└─────────────────────────────────────────────────────────────────────┘
+
+❌ Not waiting for goroutines
+   go doWork()
+   // main exits immediately!
+   
+✅ Use WaitGroup or channels
+   wg.Add(1)
+   go func() { defer wg.Done(); doWork() }()
+   wg.Wait()
+
+─────────────────────────────────────────────────────────────────────
+
+❌ Loop variable capture
+   for i := 0; i < 10; i++ {
+       go func() { fmt.Println(i) }()  // All print 10!
+   }
+   
+✅ Pass as parameter
+   for i := 0; i < 10; i++ {
+       go func(n int) { fmt.Println(n) }(i)
+   }
+
+─────────────────────────────────────────────────────────────────────
+
+❌ Race condition on shared variable
+   counter := 0
+   go func() { counter++ }()  // Unsafe!
+   
+✅ Use Mutex or channels
+   var mu sync.Mutex
+   mu.Lock()
+   counter++
+   mu.Unlock()
+
+─────────────────────────────────────────────────────────────────────
+
+❌ Receiver closes channel
+   go func() { msg := <-ch; close(ch) }()  // Wrong!
+   
+✅ Sender closes channel
+   go func() {
+       for _, msg := range messages {
+           ch <- msg
+       }
+       close(ch)  // Sender closes
+   }()
+
+─────────────────────────────────────────────────────────────────────
+
+❌ Forgetting to close channel
+   for {
+       value := <-ch  // Loops forever!
+   }
+   
+✅ Close channel when done
+   go func() {
+       ch <- data
+       close(ch)
+   }()
+   for value := range ch { ... }  // Exits when closed
+
+┌─────────────────────────────────────────────────────────────────────┐
+│ DEBUGGING & TESTING                                                │
+└─────────────────────────────────────────────────────────────────────┘
+
+  Race Detector:
+    go run -race program.go
+    go test -race ./...
+
+  Deadlock Detection:
+    Go runtime automatically detects deadlocks
+    
+  Profiling:
+    import _ "net/http/pprof"
+    // View at http://localhost:6060/debug/pprof/
+
+┌─────────────────────────────────────────────────────────────────────┐
+│ BEST PRACTICES                                                      │
+└─────────────────────────────────────────────────────────────────────┘
+
+  1. Always use defer for cleanup (Done(), Unlock(), Close())
+  2. Channel direction for API clarity
+  3. Context as first parameter for cancellation
+  4. Limit goroutines with worker pools in production
+  5. Run tests with -race flag
+  6. Don't create goroutines in loops without control
+  7. Close channels from sender, not receiver
+  8. Use select with timeout for long operations
+
+┌─────────────────────────────────────────────────────────────────────┐
+│ PERFORMANCE TIPS                                                    │
+└─────────────────────────────────────────────────────────────────────┘
+
+  • Goroutines: ~2KB stack (vs 1MB OS thread)
+  • Can run millions of goroutines
+  • Context switching: Much faster than OS threads
+  • Buffered channels: Reduce blocking
+  • Worker pools: Better than unlimited goroutines
+  • Avoid goroutine leaks: Ensure all can exit
+
+╔════════════════════════════════════════════════════════════════════╗
+║  "Don't communicate by sharing memory;                             ║
+║   share memory by communicating." - Go Proverb                     ║
+╚════════════════════════════════════════════════════════════════════╝
