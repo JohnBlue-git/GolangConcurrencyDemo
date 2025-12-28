@@ -341,7 +341,7 @@ Visualization:
 Real-World Integrated Example: API Data Processor (main.go)
 
 ┌─────────────────────────────────────────────────────────────────┐
-│ STAGE 1: Async Fetching (with SELECT for timeout)              │
+│ STAGE 1: Async Fetching (with SELECT for timeout)               │
 └─────────────────────────────────────────────────────────────────┘
     
     go fetch(API-1) --+
@@ -354,17 +354,17 @@ Real-World Integrated Example: API Data Processor (main.go)
                     v
 
 ┌─────────────────────────────────────────────────────────────────┐
-│ STAGE 2: Worker Pool (3 workers process data)                  │
+│ STAGE 2: Worker Pool (3 workers process data)                   │
 └─────────────────────────────────────────────────────────────────┘
 
-    ┌──────────────┐
-    │ fetchedData  │
-    │  (channel)   │
-    └──────┬───────┘
-           |
-    ┌──────+──────┐
-    |      |      |
-    v      v      v
+        ┌──────────────┐
+        │ fetchedData  │
+        │  (channel)   │
+        └──────┬───────┘
+               |
+    ┌──────────+───────────┐
+    |          |           |
+    v          v           v
 ┌────────┐ ┌────────┐ ┌────────┐
 │Worker 1│ │Worker 2│ │Worker 3│
 └───┬────┘ └───┬────┘ └───┬────┘
@@ -375,21 +375,18 @@ Real-World Integrated Example: API Data Processor (main.go)
         │processedData│
         │  (channel)  │
         └──────┬──────┘
-
-                    |
-                    v
-
+               |
+               v
 ┌─────────────────────────────────────────────────────────────────┐
-│ STAGE 3: Pipeline Output                                       │
+│ STAGE 3: Pipeline Output                                        │
 └─────────────────────────────────────────────────────────────────┘
 
     for result := range processedData {
         print(result)
     }
 
-                    |
-                    v
-
+                |
+                v
 ┌─────────────────────────────────────────────────────────────────┐
 │ STATISTICS (Mutex-Protected)                                    │
 └─────────────────────────────────────────────────────────────────┘
