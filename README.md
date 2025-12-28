@@ -550,18 +550,3 @@ Go will detect and report deadlocks:
 ```
 fatal error: all goroutines are asleep - deadlock!
 ```
-
-## Contributing
-
-Feel free to add more concurrency patterns and examples to this project!
-
-## License
-
-This is a demonstration project for educational purposes.
-
----
-
-**Created for**: Redfish Entry Test Project  
-**Purpose**: Demonstrate Go's concurrency features  
-**Author**: Educational Demo  
-**Last Updated**: December 2025
